@@ -12,7 +12,8 @@ using namespace open3d;
 
 int filename_length = std::string("demo_visaulize.cpp").length();
 std::string file_dir = std::string(__FILE__);
-std::string data_dir = file_dir.substr(0, file_dir.size()-filename_length) + "../../data/";
+// std::string data_dir = file_dir.substr(0, file_dir.size()-filename_length) + "../../data/";
+std::string data_dir = "/media/lemon/database/odometry_velodyne/velodyne/sequences/00/velodyne/";
 
 
 void read_bin(std::string bin_path, Eigen::MatrixXf &cloud)
@@ -51,6 +52,7 @@ void addNormals(Eigen::MatrixXf normals, std::shared_ptr<geometry::PointCloud> g
 int main(int argc, char* argv[]) {
 
   cout << "Execute" << __FILE__ << endl;
+
   // Get the dataset
   std::string input_cloud_filepath;
   if (argc < 2) {

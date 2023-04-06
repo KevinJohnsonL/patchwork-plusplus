@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <unistd.h>
 #include <open3d/Open3D.h>
 // for list folder
 #include <experimental/filesystem>
@@ -11,7 +12,8 @@ using namespace open3d;
 
 int filename_length = std::string("demo_sequential.cpp").length();
 std::string file_dir = std::string(__FILE__);
-std::string data_dir = file_dir.substr(0, file_dir.size()-filename_length) + "../../data/";
+// std::string data_dir = file_dir.substr(0, file_dir.size()-filename_length) + "../../data/";
+std::string data_dir = "/media/lemon/database/odometry_velodyne/velodyne/sequences/00/velodyne/";
 
 void read_bin(std::string bin_path, Eigen::MatrixXf &cloud)
 {
@@ -56,10 +58,32 @@ int main() {
 
   patchwork::PatchWorkpp Patchworkpp(patchwork_parameters);
 
-  for (const fs::directory_entry & entry : fs::directory_iterator(data_dir))
+  // Visualizer
+  visualization::Visualizer visualizer;
+  visualizer.CreateVisualizerWindow("Open3D", 1600, 900);
+
+  string command;
+	command = "ls " + data_dir + " > /home/lemon/kitti_ws/tmp_bin.log";
+	system(command.c_str());
+
+	ifstream ifs("/home/lemon/kitti_ws/tmp_bin.log");
+	if(ifs.fail()) {
+		cout << "bad tmp_bin.log" << endl;
+		return -1;
+	}
+  string file_name;
+
+  // for (const fs::directory_entry & entry : fs::directory_iterator(data_dir))
+  while(getline(ifs, file_name))
   {
+    int len = file_name.length();
+		string file_type = file_name.substr(len-3, 3);
+		if(file_type.compare("bin"))
+			continue;
+
     // Load point cloud
-    std::string file = entry.path().c_str();
+    // std::string file = entry.path().c_str();
+    std::string file = data_dir + file_name;
     Eigen::MatrixXf cloud;
     read_bin(file, cloud);
 
@@ -79,12 +103,11 @@ int main() {
     cout << "Ground Points    #: " << ground.rows() << endl;
     cout << "Nonground Points #: " << nonground.rows() << endl;
     cout << "Time Taken : "<< time_taken / 1000000 << "(sec)" << endl;
-    cout << "Press ... \n" << endl;
-    cout << "\t H  : help" << endl;
-    cout << "\t N  : visualize the surface normals" << endl;
-    cout << "\tESC : close the Open3D window" << endl;
+    // cout << "Press ... \n" << endl;
+    // cout << "\t H  : help" << endl;
+    // cout << "\t N  : visualize the surface normals" << endl;
+    // cout << "\tESC : close the Open3D window" << endl;
 
-    // Visualize
     std::shared_ptr<geometry::PointCloud> geo_ground(new geometry::PointCloud);
     std::shared_ptr<geometry::PointCloud> geo_nonground(new geometry::PointCloud);
     std::shared_ptr<geometry::PointCloud> geo_centers(new geometry::PointCloud);
@@ -98,12 +121,12 @@ int main() {
     geo_nonground->PaintUniformColor(Eigen::Vector3d(1.0, 0.0, 0.0));
     geo_centers->PaintUniformColor(Eigen::Vector3d(1.0, 1.0, 0.0));  
 
-    visualization::Visualizer visualizer;
-    visualizer.CreateVisualizerWindow("Open3D", 1600, 900);
     visualizer.AddGeometry(geo_ground);
     visualizer.AddGeometry(geo_nonground);
     visualizer.AddGeometry(geo_centers);
-    visualizer.Run();
-    visualizer.DestroyVisualizerWindow();
+    visualizer.PollEvents();
+    visualizer.UpdateRender();
+    //usleep(200000);
+    visualizer.ClearGeometries();
   }
 }
